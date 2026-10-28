@@ -28,3 +28,33 @@
 
 ### Learning Reflections
 - Structuring `NetworkNode` around clear object state and behaviour made the rules of the simulation easy to follow. Writing unit tests alongside the class made it straightforward to check edge cases and validation logic before building the rest of the network graph.
+
+---
+
+## Iteration 2 - Network Graph and Subnet Routing (28/10/2026)
+
+### Activity Descriptions
+- Implemented the `NetworkGraph` class in `domain/graph.py` to manage how `NetworkNode` objects are connected together in a network topology.
+- Added methods to register nodes, link them with directed or bidirectional edges, look up adjacent nodes, and serialise the graph into a dictionary format.
+- Implemented `is_reachable()` using a breadth-first search (BFS) queue to enforce network pivoting rules, where deeper nodes can only be accessed after intermediate parent nodes have been exploited.
+- Wrote unit tests in `tests/test_graph.py` to test graph connections, pivoting across three nodes (gateway, proxy, and vault), and node locking behaviour.
+
+### OOP Design Breakdown
+- **`NetworkGraph` (Class)**:
+  - **Attributes (What it knows)**: `nodes` (dict mapping IP strings to `NetworkNode` objects), `edges` (list of `(source_ip, target_ip)` tuples), and `root_node` (optional string storing the entry gateway IP).
+  - **Methods (What it does)**:
+    - `add_node(node, is_root)`: Validates and registers a `NetworkNode` in the graph and assigns the root node if needed.
+    - `connect(source_ip, target_ip, bidirectional)`: Creates a connection between two existing nodes and prevents self-loops or duplicate edges.
+    - `get_adjacent(ip)`: Returns a list of `NetworkNode` instances directly connected to the given IP address.
+    - `is_reachable(target_ip)`: Traverses the graph from `root_node` using BFS, only stepping through nodes whose state is `NodeState.EXPLOITED`.
+    - `serialize()`: Exports the graph's root node, node states, and edges as a plain Python dictionary.
+
+### Key Accomplishments
+- Completed Stage 1 (Core Domain Engine) of the project proposal with both `NetworkNode` and `NetworkGraph` working together.
+- Got all 11 unit tests passing across `test_node.py` and `test_graph.py`, confirming that internal subnet nodes stay unreachable until intermediate proxies are breached, and become unreachable again if an intermediate proxy is locked.
+
+### Challenges Faced
+- Making sure that cyclic connections (since bidirectional edges create loops between two nodes) did not cause an infinite loop when checking if a target node is reachable. This was resolved by maintaining a `visited` set inside `is_reachable()` alongside a `deque` queue so each node is only checked once per traversal.
+
+### Learning Reflections
+- Using `NetworkNode` objects inside `NetworkGraph` showed how object composition works in practice. Instead of the graph manually tracking port numbers or firewall flags, it simply checks `current_node.state == NodeState.EXPLOITED` while handling the routing logic itself.
