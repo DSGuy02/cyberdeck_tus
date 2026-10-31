@@ -100,3 +100,39 @@ One challenge that came up was modifying the list of active programs inside the 
 Learning Reflections
 
 Using an abstract base class made building new intrusion tools straightforward because each subclass only needed to implement on_complete and specify its resource costs. Managing finite hardware constraints also showed how OOP state can naturally prevent invalid actions in a simulation, such as stopping a player from running more programs than their cyberdeck has memory or CPU threads to support.
+
+
+
+
+31/10/2026 - Iteration 4: Defensive Countermeasures and Trace Engine
+
+Activity Descriptions
+
+Implemented the BaseIceDaemon abstract base class and concrete countermeasure daemons in domain/trace.py.
+Created TraceAcceleratorIce to escalate system detection speed and FirewallLockIce to automatically lock compromised servers when defensive alerts trigger.
+Implemented the TraceEngine class in domain/trace.py to monitor network noise, track intrusion trace percentages, manage alert states, and check session failure conditions.
+Integrated defensive surveillance cycles with the CyberDeck hardware model so running active programs generates network noise that advances the trace meter.
+Exported the new defensive countermeasure classes in domain/__init__.py.
+Wrote unit tests in tests/test_trace.py covering trace increments, trace dampening bounds, alert escalations, ICE activation thresholds, and game over detection.
+
+OOP Design and Implementation
+
+This stage of the project focuses on the defensive antagonist: the systems that detect and push back against unauthorised intrusion.
+BaseIceDaemon was created as an abstract base class to define how defensive Intrusion Countermeasure Electronics operate. For its attributes, it stores the daemon name, a trigger_threshold percentage from 0 to 100, and an is_active boolean flag. For its methods, activate and deactivate toggle the daemon state, while execute_countermeasure is defined as an abstract method for specific defensive actions.
+Two polymorphic subclasses inherit from BaseIceDaemon. TraceAcceleratorIce activates once trace crosses its threshold and permanently increases the engine detection rate. FirewallLockIce holds a reference to a target NetworkNode and calls its lock_node method when defensive alerts reach high thresholds, resetting its open ports and preventing further data exfiltration.
+TraceEngine was implemented to control threat monitoring and game state resolution. For its attributes, it tracks trace_percentage, base_detection_rate, detection_rate, alert_threshold, is_alerted, is_game_over, and a list of active_ice daemons. For its methods, increment_trace adds to the trace level up to 100 percent, dampens any attempts below zero, and checks if the alarm should trigger or if game over has been reached. dampen_trace allows reducing trace down to zero. trigger_alarm sets is_alerted to True and boosts the detection rate by fifty percent. tick advances the defensive clock, calculating extra noise if a CyberDeck with active programs is passed, updating trace progress, and executing any ICE daemons whose trigger thresholds have been met.
+This setup uses polymorphism so TraceEngine can trigger any BaseIceDaemon subclass without needing hardcoded logic for each defensive tool. It also uses object composition by linking TraceEngine with CyberDeck and NetworkNode objects during surveillance ticks.
+
+Key Accomplishments
+
+Completed Stage 3 of the project proposal by implementing a reactive TraceEngine and modular ICE daemons.
+Successfully got all 31 unit tests passing across test_node.py, test_graph.py, test_deck.py, and test_trace.py.
+Verified that active cyberdeck programs generate realistic noise that accelerates detection, and that ICE countermeasures properly lock down target servers when alert thresholds are reached.
+
+Challenges Faced
+
+One challenge that came up was preventing countermeasure daemons from applying their effects repeatedly on every single tick once their threshold was crossed. For example, TraceAcceleratorIce kept boosting the detection rate every tick once active, causing the trace to spike to 100 percent in two steps. The way to mitigate this was to add state flags to the daemons, such as applied and has_triggered booleans, so one-time actions like increasing base detection speed or locking a server only execute once when the trigger condition is first met.
+
+Learning Reflections
+
+Developing TraceEngine showed how an antagonistic state machine can create realistic tension in a systems simulation. Using clear object attributes like alert thresholds and state booleans made it straightforward to test defensive escalation step by step without relying on real-time timers, keeping all tests completely deterministic and fast.
