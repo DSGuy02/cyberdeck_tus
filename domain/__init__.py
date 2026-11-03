@@ -2,6 +2,7 @@ from .deck import CyberDeck
 from .graph import NetworkGraph
 from .node import NetworkNode, NodeState
 from .program import BaseProgram, BruteForcer, DataExtractor, PortScanner
+from .session import GameSession
 from .trace import BaseIceDaemon, FirewallLockIce, TraceAcceleratorIce, TraceEngine
 
 __all__ = [
@@ -17,4 +18,5 @@ __all__ = [
     "BaseIceDaemon",
     "TraceAcceleratorIce",
     "FirewallLockIce",
+    "GameSession",
 ]

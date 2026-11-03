@@ -136,3 +136,37 @@ One challenge that came up was preventing countermeasure daemons from applying t
 Learning Reflections
 
 Developing TraceEngine showed how an antagonistic state machine can create realistic tension in a systems simulation. Using clear object attributes like alert thresholds and state booleans made it straightforward to test defensive escalation step by step without relying on real-time timers, keeping all tests completely deterministic and fast.
+
+
+
+
+03/11/2026 - Iteration 5: Terminal User Interface and Game Session Controller
+
+Activity Descriptions
+
+Implemented the GameSession controller class in domain/session.py to coordinate the network topology, cyberdeck hardware, and trace engine under unified simulation rules.
+Created the TerminalUI presentation class in ui/terminal.py featuring an ASCII dashboard HUD with hardware capacity meters, network topology tables, active program progress bars, and event logging.
+Added interactive command handling with input validation for deploying scanners, cracking ports, exfiltrating data, aborting running programs, and advancing simulation turns.
+Implemented main.py as a standalone runnable entrypoint setting up a realistic three-tier corporate network scenario for live software demonstration.
+Wrote unit tests in tests/test_session.py and tests/test_ui.py covering session rules, victory and defeat states, dashboard rendering, and command parsing.
+
+OOP Design and Implementation
+
+In this stage, the project needed a clear separation between the simulation logic and the visual user interface.
+GameSession was created as a high-level controller class to coordinate the domain models. For its attributes, it stores references to NetworkGraph, CyberDeck, and TraceEngine, alongside a turn counter, an event_log list, an exfiltrated_data list, and target_objective_ip to track the main mission goal. For its methods, deploy_scanner, deploy_brute_forcer, and deploy_extractor validate that the target IP exists and is currently reachable across exploited pivot points before loading the respective tool onto the deck. The tick method advances the cyberdeck hardware by one turn, logs any completed actions or breached firewalls, checks if the primary objective data was stolen to set is_victory to True, and steps the defensive trace engine forward.
+TerminalUI was implemented in ui/terminal.py as a decoupled presentation layer. For its attributes, it holds a reference to the GameSession and a use_colors boolean flag that enables or disables ANSI colour codes. For its methods, render_bar draws ASCII capacity bars for RAM, CPU cores, program progress, and defensive trace percentage. render_dashboard constructs the visual interface by assembling the banner, hardware telemetry, network node table with colour status badges, active programs, and recent log messages. execute_command takes raw user input, tokenises arguments using shlex, runs the requested action with friendly error handling, and returns status feedback. run_interactive_loop provides the main read-eval-print loop that updates the terminal screen each turn until victory or defeat.
+This architecture follows the Model-View-Controller design pattern, keeping the domain models completely unaware of terminal formatting while GameSession manages state transitions and TerminalUI handles display and input.
+
+Key Accomplishments
+
+Completed Stage 4 of the project proposal by delivering a working interactive terminal dashboard and session controller.
+Successfully got all 47 unit tests passing across test_node.py, test_graph.py, test_deck.py, test_trace.py, test_session.py, and test_ui.py.
+Created a ready-to-run main.py entrypoint that can be demonstrated live in a terminal without requiring any third-party external dependencies.
+
+Challenges Faced
+
+One challenge that came up was managing user input parsing and error reporting during interactive play. If a user entered invalid IP addresses, malformed port numbers, or attempted to crack an undiscovered server, unhandled exceptions would crash the program. The way to mitigate this was to route user inputs through execute_command with a broad try-except structure that catches KeyError, ValueError, and PermissionError exceptions. This allows the terminal UI to display helpful error guidance to the player while keeping the simulation session running smoothly.
+
+Learning Reflections
+
+Building the terminal interface showed the practical advantage of keeping the domain engine decoupled from the presentation code. Because the network graph, cyberdeck, and trace engine were already tested headlessly, building the UI only required formatting the existing object attributes into an ASCII layout. Testing the UI with simulated inputs also made it easy to verify the entire infiltration loop from reconnaissance to data exfiltration.
