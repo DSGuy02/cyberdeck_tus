@@ -386,3 +386,4 @@ class ScenarioLoader:
         session.event_log = list(data.get("event_log", []))
 
         return session
+
