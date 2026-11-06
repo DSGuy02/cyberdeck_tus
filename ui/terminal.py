@@ -2,6 +2,7 @@ import shlex
 from typing import Callable, List
 
 from domain.node import NodeState
+from domain.scenario import ScenarioLoader
 from domain.session import GameSession
 
 
@@ -190,6 +191,9 @@ class TerminalUI:
                     "  extract <ip>       Deploy DataExtractor to steal data from exploited node\n"
                     "  abort <name/ip>    Abort an active intrusion program and reclaim RAM\n"
                     "  tick [turns]       Advance simulation by N turns (default: 1)\n"
+                    "  save [filepath]    Save current session state to JSON file\n"
+                    "  load [filepath]    Load and resume a saved session from file\n"
+                    "  scenario <path>    Load a new mission scenario from JSON file\n"
                     "  status             Refresh the telemetry and dashboard\n"
                     "  help               Display this command list\n"
                     "  exit / quit        End infiltration session"
@@ -197,6 +201,23 @@ class TerminalUI:
 
             elif cmd == "status":
                 return "Telemetry refreshed."
+
+            elif cmd == "save":
+                filepath = args[0] if args else "savegame.json"
+                ScenarioLoader.save_session_to_file(self.session, filepath)
+                self.session.log_event(f"Session saved to '{filepath}'.")
+                return f"Session successfully saved to '{filepath}'."
+
+            elif cmd == "load":
+                filepath = args[0] if args else "savegame.json"
+                self.session = ScenarioLoader.load_session_from_file(filepath)
+                return f"Session successfully loaded from '{filepath}'."
+
+            elif cmd == "scenario":
+                if not args:
+                    return "[ERROR] Usage: scenario <filepath>"
+                self.session = ScenarioLoader.load_scenario_from_file(args[0])
+                return f"Mission scenario successfully loaded from '{args[0]}'."
 
             elif cmd == "tick":
                 turns = 1

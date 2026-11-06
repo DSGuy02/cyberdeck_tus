@@ -1,0 +1,88 @@
+{
+  "name": "Operation Shadow Grid",
+  "description": "Multi-tier corporate heist. Breach the public edge router, traverse through either the DMZ web cluster or VPN gateway, compromise the finance proxy, and exfiltrate the executive master ledger.",
+  "target_objective_ip": "10.0.1.100",
+  "deck": {
+    "total_ram": 12,
+    "cpu_cores": 3
+  },
+  "trace": {
+    "base_detection_rate": 2.0,
+    "alert_threshold": 45.0,
+    "ice": [
+      {
+        "type": "TraceAcceleratorIce",
+        "name": "Sentinel-TraceAmp",
+        "trigger_threshold": 35.0,
+        "boost_rate": 2.5
+      },
+      {
+        "type": "FirewallLockIce",
+        "name": "LedgerDeadmanLock",
+        "trigger_threshold": 80.0,
+        "target_ip": "10.0.1.100"
+      }
+    ]
+  },
+  "network": {
+    "root_node": "192.168.1.1",
+    "nodes": [
+      {
+        "ip": "192.168.1.1",
+        "hostname": "edge-router-01",
+        "security_level": 1,
+        "ports": {
+          "80": false,
+          "443": false
+        },
+        "state": "UNDISCOVERED"
+      },
+      {
+        "ip": "192.168.1.10",
+        "hostname": "dmz-web-app",
+        "security_level": 2,
+        "ports": {
+          "8080": false
+        },
+        "state": "UNDISCOVERED"
+      },
+      {
+        "ip": "192.168.1.20",
+        "hostname": "vpn-access-gw",
+        "security_level": 2,
+        "ports": {
+          "1194": false
+        },
+        "state": "UNDISCOVERED"
+      },
+      {
+        "ip": "10.0.1.5",
+        "hostname": "finance-proxy",
+        "security_level": 3,
+        "ports": {
+          "22": false,
+          "8443": false
+        },
+        "state": "UNDISCOVERED"
+      },
+      {
+        "ip": "10.0.1.100",
+        "hostname": "core-ledger-vault",
+        "security_level": 4,
+        "ports": {
+          "5432": false,
+          "9000": false
+        },
+        "data_payload": "TOP_SECRET_EXECUTIVE_ACQUISITION_LEDGER",
+        "state": "UNDISCOVERED"
+      }
+    ],
+    "edges": [
+      ["192.168.1.1", "192.168.1.10"],
+      ["192.168.1.1", "192.168.1.20"],
+      ["192.168.1.10", "10.0.1.5"],
+      ["192.168.1.20", "10.0.1.5"],
+      ["10.0.1.5", "10.0.1.100"]
+    ]
+  }
+}

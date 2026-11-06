@@ -4,9 +4,14 @@
 Main entrypoint for running the interactive terminal simulation.
 """
 
+import argparse
+import os
+import sys
+
 from domain.deck import CyberDeck
 from domain.graph import NetworkGraph
 from domain.node import NetworkNode
+from domain.scenario import ScenarioLoader
 from domain.session import GameSession
 from domain.trace import FirewallLockIce, TraceAcceleratorIce, TraceEngine
 from ui.terminal import TerminalUI
@@ -61,9 +66,72 @@ def build_default_scenario() -> GameSession:
     return session
 
 
+def resolve_default_scenario_path() -> str:
+    """Finds the default scenario file path across working directory variations."""
+    candidates = [
+        os.path.join(os.path.dirname(__file__), "scenarios", "operation_iron_gate.json"),
+        os.path.join("scenarios", "operation_iron_gate.json"),
+        os.path.join("cyberdeck", "scenarios", "operation_iron_gate.json"),
+    ]
+    for path in candidates:
+        if os.path.exists(path):
+            return path
+    return ""
+
+
 def main() -> None:
-    session = build_default_scenario()
-    ui = TerminalUI(session=session, use_colors=True)
+    parser = argparse.ArgumentParser(
+        description="CyberDeck - Gamified Network Infiltration & Intrusion Countermeasure Simulator."
+    )
+    parser.add_argument(
+        "scenario",
+        nargs="?",
+        default=None,
+        help="Optional path to a custom JSON scenario file.",
+    )
+    parser.add_argument(
+        "--scenario",
+        dest="scenario_opt",
+        default=None,
+        help="Path to a custom JSON scenario file.",
+    )
+    parser.add_argument(
+        "--load",
+        dest="load_save",
+        default=None,
+        help="Path to a savegame file to resume an existing session.",
+    )
+    parser.add_argument(
+        "--no-color",
+        dest="no_color",
+        action="store_true",
+        help="Disable ANSI colors in terminal HUD.",
+    )
+
+    args = parser.parse_args()
+
+    session: GameSession
+
+    if args.load_save:
+        try:
+            session = ScenarioLoader.load_session_from_file(args.load_save)
+            print(f"[CyberDeck] Resuming session loaded from '{args.load_save}'.")
+        except Exception as err:
+            print(f"[ERROR] Failed to load savegame '{args.load_save}': {err}", file=sys.stderr)
+            sys.exit(1)
+    else:
+        target_scenario = args.scenario_opt or args.scenario or resolve_default_scenario_path()
+        if target_scenario and os.path.exists(target_scenario):
+            try:
+                session = ScenarioLoader.load_scenario_from_file(target_scenario)
+                print(f"[CyberDeck] Loaded mission scenario from '{target_scenario}'.")
+            except Exception as err:
+                print(f"[WARNING] Failed loading '{target_scenario}': {err}. Using default scenario.", file=sys.stderr)
+                session = build_default_scenario()
+        else:
+            session = build_default_scenario()
+
+    ui = TerminalUI(session=session, use_colors=not args.no_color)
     ui.run_interactive_loop()
 
 

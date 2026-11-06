@@ -1,0 +1,66 @@
+{
+  "name": "Operation Iron Gate",
+  "description": "Infiltrate NexaCorp perimeter, pivot through the internal proxy, and extract confidential schematics from the secure vault.",
+  "target_objective_ip": "10.0.0.3",
+  "deck": {
+    "total_ram": 8,
+    "cpu_cores": 2
+  },
+  "trace": {
+    "base_detection_rate": 2.5,
+    "alert_threshold": 50.0,
+    "ice": [
+      {
+        "type": "TraceAcceleratorIce",
+        "name": "TraceBooster-Alpha",
+        "trigger_threshold": 40.0,
+        "boost_rate": 2.0
+      },
+      {
+        "type": "FirewallLockIce",
+        "name": "VaultLockdown",
+        "trigger_threshold": 85.0,
+        "target_ip": "10.0.0.3"
+      }
+    ]
+  },
+  "network": {
+    "root_node": "10.0.0.1",
+    "nodes": [
+      {
+        "ip": "10.0.0.1",
+        "hostname": "gw-perimeter",
+        "security_level": 1,
+        "ports": {
+          "80": false
+        },
+        "state": "UNDISCOVERED"
+      },
+      {
+        "ip": "10.0.0.2",
+        "hostname": "proxy-internal",
+        "security_level": 2,
+        "ports": {
+          "22": false,
+          "443": false
+        },
+        "state": "UNDISCOVERED"
+      },
+      {
+        "ip": "10.0.0.3",
+        "hostname": "vault-database",
+        "security_level": 3,
+        "ports": {
+          "3306": false,
+          "8080": false
+        },
+        "data_payload": "CONFIDENTIAL_CYBERDECK_SCHEMATICS_V4",
+        "state": "UNDISCOVERED"
+      }
+    ],
+    "edges": [
+      ["10.0.0.1", "10.0.0.2"],
+      ["10.0.0.2", "10.0.0.3"]
+    ]
+  }
+}

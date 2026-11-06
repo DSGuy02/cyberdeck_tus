@@ -170,3 +170,39 @@ One challenge that came up was managing user input parsing and error reporting d
 Learning Reflections
 
 Building the terminal interface showed the practical advantage of keeping the domain engine decoupled from the presentation code. Because the network graph, cyberdeck, and trace engine were already tested headlessly, building the UI only required formatting the existing object attributes into an ASCII layout. Testing the UI with simulated inputs also made it easy to verify the entire infiltration loop from reconnaissance to data exfiltration.
+
+
+
+
+06/11/2026 - Iteration 6: Scenarios, Serialization, and State Persistence
+
+Activity Descriptions
+
+Implemented the ScenarioLoader class in domain/scenario.py to handle schema validation, scenario creation, and savegame file persistence.
+Added validation routines to ensure scenario dictionaries verify required fields, unique node IPs, valid root nodes, and sane hardware parameters before running.
+Created two playable JSON campaign files in scenarios/, Operation Iron Gate and Operation Shadow Grid, featuring multi-tiered networks and reactive ICE daemons.
+Implemented full session serialization and deserialization allowing active game states, including running program progress and defensive trace levels, to be saved and restored from disk.
+Integrated save, load, and scenario commands into TerminalUI and updated main.py with command-line arguments to load custom missions.
+Wrote unit and integration tests in tests/test_scenario.py covering schema validation errors, scenario loading from disk, and complete round-trip save and load persistence.
+
+OOP Design and Implementation
+
+The final development stage required making the simulator extensible so that custom network layouts could be loaded and saved without modifying Python code.
+ScenarioLoader was designed as a domain service class responsible for serialization and persistence. For its methods, validate_scenario_dict performs defensive checks on input data, verifying that node collections are non-empty, root node and target objective IPs exist in the network, and deck RAM and trace thresholds are within valid limits. load_scenario_from_dict reconstructs NetworkNode instances, adds directed edges into NetworkGraph, configures CyberDeck hardware limits, binds active ICE daemons to TraceEngine, and returns a fully initialized GameSession.
+For state persistence, save_session_to_file extracts the runtime state of all four core domain classes into a nested dictionary and dumps it to a JSON file. This includes node states, open port dictionaries, active tool progress percentages, current hardware memory usage, trace escalation flags, turn counters, and the complete event log. load_session_from_file reads this file back and reconstructs the live session with identical progress, allowing an ongoing infiltration run to be paused and resumed seamlessly.
+This design maintains loose coupling by isolating serialization logic within ScenarioLoader. The core domain models (NetworkNode, NetworkGraph, CyberDeck, TraceEngine) remain focused on their primary simulation responsibilities while ScenarioLoader handles JSON parsing, input validation, and object reconstruction.
+
+Key Accomplishments
+
+Completed Stage 5 of the project proposal, successfully finishing all planned software iterations for CyberDeck.
+Implemented complete JSON scenario loading and round-trip game state persistence.
+Successfully got all 52 unit and integration tests passing across all 7 test suites with zero regressions.
+Verified that saved game states restore active intrusion tools with exact percentage progress and continue executing normally upon resuming.
+
+Challenges Faced
+
+One challenge that came up was accurately serializing and deserializing active intrusion programs running on the CyberDeck. Because Python classes cannot be directly dumped to JSON, programs needed to be serialized with their specific subclass type name, target IP, and runtime step variables. When loading the session back, the loader had to look up the reconstructed NetworkNode from the graph by its IP address and instantiate the correct subclass (PortScanner, BruteForcer, or DataExtractor) before restoring its exact progress. This was resolved by checking the program type string during deserialization and matching it to the target node object in the newly reconstructed network graph.
+
+Learning Reflections
+
+Implementing scenario loading and state persistence tied together all the domain classes developed across previous iterations. It demonstrated how proper object-oriented design and encapsulation make saving and restoring system state straightforward, as each class manages its own discrete attributes. Having external JSON scenario files also makes the simulator much easier to demonstrate and expand with new network architectures in the future.
